@@ -17,15 +17,31 @@ class webServerHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         try:
-            if self.path.endswith("/restaurants"):
-                restaurants = session.query(Restaurant).all()
+            # Objective 3 Step 2 - Create /restarants/new page
+            if self.path.endswith("/restaurants/new"):
                 self.send_response(200)
                 self.send_header('Content-type', 'text/html')
                 self.end_headers()
                 output = ""
                 output += "<html><body>"
-                output += "</br></br>"
-                output += "<a href = '/restaurants/new'> Make a New Restaurant Here </a>"
+                output += "<h1>Make a New Restaurant</h1>"
+                output += "<form method = 'POST' enctype='multipart/form-data' action = '/restaurants/new'>"
+                output += "<input name = 'newRestaurantName' type = 'text' placeholder = 'New Restaurant Name' > "
+                output += "<input type='submit' value='Create'>"
+                output += "</form></body></html>"
+                self.wfile.write(output)
+                return
+
+            if self.path.endswith("/restaurants"):
+                restaurants = session.query(Restaurant).all()
+                output = ""
+                # Objective 3 Step 1 - Create a Link to create a new menu item
+                output += "<a href = '/restaurants/new' > Make a New Restaurant Here </a></br></br>"
+
+                self.send_response(200)
+                self.send_header('Content-type', 'text/html')
+                self.end_headers()
+                output += "<html><body>"
                 for restaurant in restaurants:
                     output += restaurant.name
                     output += "</br>"
@@ -34,41 +50,31 @@ class webServerHandler(BaseHTTPRequestHandler):
                     output += "</br>"
                     output += "<a href =' #'> Delete </a>"
                     output += "</br></br></br>"
-                output += "</body></html>"
-                self.wfile.write(output)
-                return
 
-            if self.path.endswith("/restaurants/new"):
-                self.send_response(200)
-                self.send_header('Content-type', 'text/html')
-                self.end_headers()
-                output = ""
-                output += "<html><body>"
-                output += "Make a New Restaurant </br></br>"
-                output += "<form method = 'POST' action = '/restaurants/new' enctype='multipart/form-data'>"
-                output += "<input name = 'newRestaurantName' type='text' placeholder='New Restaurant Here'>"
-                output += "<input type = 'submit' value ='submit'>"
-                # if click 'submit', the form-data will be sent to the action page.
-                output += "</html></body>"
+                output += "</body></html>"
                 self.wfile.write(output)
                 return
 
         except IOError:
             self.send_error(404, 'File Not Found: %s' % self.path)
 
+    # Objective 3 Step 3- Make POST method
     def do_POST(self):
         try:
-            if self.path.endswith('/restaurants/new'):
-                ctype, pdict = cgi.parse_header(self.headers.getheader('content-type'))
+            if self.path.endswith("/restaurants/new"):
+                ctype, pdict = cgi.parse_header(
+                    self.headers.getheader('content-type'))
                 if ctype == 'multipart/form-data':
                     fields = cgi.parse_multipart(self.rfile, pdict)
-                    messageContent = fields.get('newRestaurantName')
-                    newRestaurant = Restaurant(name=messageContent[0])
+                    messagecontent = fields.get('newRestaurantName')
+
+                    # Create new Restaurant Object
+                    newRestaurant = Restaurant(name=messagecontent[0])
                     session.add(newRestaurant)
                     session.commit()
 
                     self.send_response(301)
-                    self.send_header('Content-type', 'text-html')
+                    self.send_header('Content-type', 'text/html')
                     self.send_header('Location', '/restaurants')
                     self.end_headers()
 
@@ -79,7 +85,7 @@ class webServerHandler(BaseHTTPRequestHandler):
 def main():
     try:
         server = HTTPServer(('', 8080), webServerHandler)
-        print 'Web server running...open localhost:8080/restaurants'
+        print 'Web server running... Open localhost:8080/restaurants in your browser'
         server.serve_forever()
     except KeyboardInterrupt:
         print '^C received, shutting down server'
