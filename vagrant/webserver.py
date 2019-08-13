@@ -32,7 +32,7 @@ class webServerHandler(BaseHTTPRequestHandler):
                     # Objective 2 -- Add Edit and Delete Links
                     output += "<a href ='/restaurants/%s/edit'>Edit</a>" % restaurant.id
                     output += "</br>"
-                    output += "<a href =' #'> Delete </a>"
+                    output += "<a href ='/restaurants/%s/delete'>Delete</a>" % restaurant.id
                     output += "</br></br></br>"
                 output += "</body></html>"
                 self.wfile.write(output)
@@ -72,8 +72,22 @@ class webServerHandler(BaseHTTPRequestHandler):
                     # if click 'submit', the form-data will be sent to the action page.
                     output += "</form></body></html>"
                     self.wfile.write(output)
-                return
-
+                    return
+            if self.path.endswith('/delete'):
+                restaurantID = self.path.split('/')[2]
+                restaurantQuery = session.query(Restaurant).filter_by(id=restaurantID).one()
+                if restaurantQuery != []:
+                    self.send_response(200)
+                    self.send_header('Content-type', 'text/html')
+                    self.end_headers()
+                    output = ""
+                    output += "<html><body>"
+                    output += "<h1>"
+                    output += "Are you sure you want to delete %s" % restaurantQuery.name
+                    output += "<form method = 'POST' action = '/restaurants/%s/delete' enctype='multipart/form-data'>" % restaurantID
+                    output += "<input type = 'submit' value = 'Delete'>"
+                    output += "</form></body></html>"
+                    self.wfile.write(output)
         except IOError:
             self.send_error(404, 'File Not Found: %s' % self.path)
 
@@ -106,6 +120,16 @@ class webServerHandler(BaseHTTPRequestHandler):
                         self.send_header('Content-type', 'text-html')
                         self.send_header('Location', '/restaurants')
                         self.end_headers()
+            if self.path.endswith('/delete'):
+                restaurantID = self.path.split('/')[2]
+                restaurantQuery = session.query(Restaurant).filter_by(id=restaurantID).one()
+                if restaurantQuery != []:
+                    session.delete(restaurantQuery)
+                    session.commit
+                    self.send_response(302)
+                    self.send_header('Content-type', 'text-html')
+                    self.send_header('Location', '/restaurants')
+                    self.end_headers()
 
         except IOError:
             pass
