@@ -1,0 +1,14 @@
+<html>
+  <body>
+
+    <h1> Are you sure you want to delete {{item.name}}?</h1>
+
+      <form method='POST' action='{{url_for('deleteMenuItem', restaurant_id=item.restaurant_id, menu_id=item.id)}}'>
+        </br>
+        <input type='submit' value='Delete'>
+        </br>
+        <button type='button' action='{{url_for('newMenuItem', restaurant_id=item.restaurant_id)}}'>Cancel</button>
+      </form>
+
+  </body>
+</html>
